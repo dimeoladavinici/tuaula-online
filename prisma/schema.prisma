@@ -1,0 +1,388 @@
+generator client {
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+// ─── ENUMS ──────────────────────────────────────────────
+
+enum Role {
+  SUPER_ADMIN
+  TEACHER
+  STUDENT
+}
+
+enum EnrollmentStatus {
+  ACTIVE
+  COMPLETED
+  DROPPED
+}
+
+enum VideoType {
+  GOOGLE_DRIVE
+  LOOM_LINK
+  LOOM_EMBED
+}
+
+enum ResourceType {
+  PDF
+  DOCUMENT
+  GUIDE
+  TEMPLATE
+  OTHER
+}
+
+enum ContactType {
+  WHATSAPP
+  EMAIL
+  TELEGRAM
+  INSTAGRAM
+  WEBSITE
+  OTHER
+}
+
+enum AnalyticsEventType {
+  LESSON_VIEWED
+  LESSON_COMPLETED
+  QUIZ_ATTEMPTED
+  QUIZ_PASSED
+  QUIZ_FAILED
+  FINAL_EXAM_ATTEMPTED
+  FINAL_EXAM_PASSED
+  FINAL_EXAM_FAILED
+  CERTIFICATE_ISSUED
+  LIVE_CLASS_CLICKED
+  COMMUNITY_SUGGESTED
+  COURSE_ENROLLED
+}
+
+// ─── USER ───────────────────────────────────────────────
+
+model User {
+  id           String    @id @default(cuid())
+  email        String    @unique
+  passwordHash String
+  name         String
+  lastName     String
+  dni          String?
+  role         Role      @default(STUDENT)
+  avatarUrl    String?
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+  lastLoginAt  DateTime?
+
+  teacherProfile  TeacherProfile?
+  enrollments     Enrollment[]
+  lessonProgress  LessonProgress[]
+  quizAttempts    QuizAttempt[]
+  examAttempts    FinalExamAttempt[]
+  certificates    Certificate[]
+  analyticsEvents AnalyticsEvent[]
+
+  @@map("users")
+}
+
+// ─── TEACHER PROFILE ────────────────────────────────────
+
+model TeacherProfile {
+  id            String  @id @default(cuid())
+  userId        String  @unique
+  bio           String?
+  signatureUrl  String?
+  signatureName String?
+  signatureRole String?
+  website       String?
+
+  user    User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  courses Course[]
+
+  @@map("teacher_profiles")
+}
+
+// ─── COURSE ─────────────────────────────────────────────
+
+model Course {
+  id                 String   @id @default(cuid())
+  teacherId          String
+  title              String
+  subtitle           String?
+  description        String?
+  coverImageUrl      String?
+  accessCode         String   @unique
+  slug               String   @unique
+  minProgressForCert Int      @default(85)
+  certTitle          String?
+  certText           String?
+  published          Boolean  @default(false)
+  createdAt          DateTime @default(now())
+  updatedAt          DateTime @updatedAt
+
+  teacher         TeacherProfile   @relation(fields: [teacherId], references: [id], onDelete: Cascade)
+  modules         Module[]
+  enrollments     Enrollment[]
+  contactChannels ContactChannel[]
+  liveClasses     LiveClassEvent[]
+  finalExam       FinalExam?
+  certificates    Certificate[]
+  analyticsEvents AnalyticsEvent[]
+
+  @@map("courses")
+}
+
+// ─── ENROLLMENT ─────────────────────────────────────────
+
+model Enrollment {
+  id         String           @id @default(cuid())
+  userId     String
+  courseId   String
+  status     EnrollmentStatus @default(ACTIVE)
+  enrolledAt DateTime         @default(now())
+
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  course Course @relation(fields: [courseId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, courseId])
+  @@map("enrollments")
+}
+
+// ─── CONTACT CHANNEL ────────────────────────────────────
+
+model ContactChannel {
+  id        String      @id @default(cuid())
+  courseId  String
+  type      ContactType
+  label     String
+  url       String
+  isPrimary Boolean     @default(false)
+
+  course Course @relation(fields: [courseId], references: [id], onDelete: Cascade)
+
+  @@map("contact_channels")
+}
+
+// ─── LIVE CLASS EVENT ───────────────────────────────────
+
+model LiveClassEvent {
+  id          String   @id @default(cuid())
+  courseId    String
+  title       String
+  description String?
+  dateTime    DateTime
+  timezone    String   @default("America/Argentina/Buenos_Aires")
+  meetingUrl  String
+  createdAt   DateTime @default(now())
+
+  course Course @relation(fields: [courseId], references: [id], onDelete: Cascade)
+
+  @@map("live_class_events")
+}
+
+// ─── MODULE ─────────────────────────────────────────────
+
+model Module {
+  id          String  @id @default(cuid())
+  courseId    String
+  title       String
+  description String?
+  order       Int
+
+  course  Course   @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  lessons Lesson[]
+
+  @@map("modules")
+}
+
+// ─── LESSON ─────────────────────────────────────────────
+
+model Lesson {
+  id               String  @id @default(cuid())
+  moduleId         String
+  title            String
+  description      String?
+  estimatedMinutes Int?
+  order            Int
+  quizRequired     Boolean @default(false)
+
+  module    Module           @relation(fields: [moduleId], references: [id], onDelete: Cascade)
+  videos    LessonVideo[]
+  resources LessonResource[]
+  quiz      Quiz?
+  progress  LessonProgress[]
+
+  @@map("lessons")
+}
+
+// ─── LESSON VIDEO ───────────────────────────────────────
+
+model LessonVideo {
+  id       String    @id @default(cuid())
+  lessonId String
+  title    String
+  type     VideoType
+  url      String
+  order    Int
+
+  lesson Lesson @relation(fields: [lessonId], references: [id], onDelete: Cascade)
+
+  @@map("lesson_videos")
+}
+
+// ─── LESSON RESOURCE ────────────────────────────────────
+
+model LessonResource {
+  id           String       @id @default(cuid())
+  lessonId     String
+  title        String
+  description  String?
+  url          String
+  resourceType ResourceType @default(OTHER)
+  order        Int
+
+  lesson Lesson @relation(fields: [lessonId], references: [id], onDelete: Cascade)
+
+  @@map("lesson_resources")
+}
+
+// ─── QUIZ (MINI TEST) ──────────────────────────────────
+
+model Quiz {
+  id                   String @id @default(cuid())
+  lessonId             String @unique
+  retryCooldownMinutes Int    @default(0)
+
+  lesson    Lesson         @relation(fields: [lessonId], references: [id], onDelete: Cascade)
+  questions QuizQuestion[]
+  attempts  QuizAttempt[]
+
+  @@map("quizzes")
+}
+
+model QuizQuestion {
+  id             String  @id @default(cuid())
+  quizId         String
+  text           String
+  options        Json
+  correctAnswers Json
+  explanation    String?
+  order          Int
+
+  quiz Quiz @relation(fields: [quizId], references: [id], onDelete: Cascade)
+
+  @@map("quiz_questions")
+}
+
+model QuizAttempt {
+  id        String   @id @default(cuid())
+  userId    String
+  quizId    String
+  answers   Json
+  score     Float
+  passed    Boolean
+  createdAt DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  quiz Quiz @relation(fields: [quizId], references: [id], onDelete: Cascade)
+
+  @@map("quiz_attempts")
+}
+
+// ─── LESSON PROGRESS ────────────────────────────────────
+
+model LessonProgress {
+  id           String    @id @default(cuid())
+  userId       String
+  lessonId     String
+  completed    Boolean   @default(false)
+  completedAt  DateTime?
+  lastViewedAt DateTime  @default(now())
+
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  lesson Lesson @relation(fields: [lessonId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, lessonId])
+  @@map("lesson_progress")
+}
+
+// ─── FINAL EXAM ─────────────────────────────────────────
+
+model FinalExam {
+  id             String @id @default(cuid())
+  courseId       String @unique
+  minPassPercent Int    @default(70)
+  retryWaitHours Int    @default(24)
+
+  course    Course              @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  questions FinalExamQuestion[]
+  attempts  FinalExamAttempt[]
+
+  @@map("final_exams")
+}
+
+model FinalExamQuestion {
+  id             String @id @default(cuid())
+  examId         String
+  text           String
+  options        Json
+  correctAnswers Json
+  order          Int
+
+  exam FinalExam @relation(fields: [examId], references: [id], onDelete: Cascade)
+
+  @@map("final_exam_questions")
+}
+
+model FinalExamAttempt {
+  id        String   @id @default(cuid())
+  userId    String
+  examId    String
+  answers   Json
+  score     Float
+  passed    Boolean
+  createdAt DateTime @default(now())
+
+  user User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  exam FinalExam @relation(fields: [examId], references: [id], onDelete: Cascade)
+
+  @@map("final_exam_attempts")
+}
+
+// ─── CERTIFICATE ────────────────────────────────────────
+
+model Certificate {
+  id              String   @id @default(cuid())
+  userId          String
+  courseId         String
+  issuedAt        DateTime @default(now())
+  progressAtIssue Float
+  examScore       Float
+  valid           Boolean  @default(true)
+
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  course Course @relation(fields: [courseId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, courseId])
+  @@map("certificates")
+}
+
+// ─── ANALYTICS EVENT ────────────────────────────────────
+
+model AnalyticsEvent {
+  id        String             @id @default(cuid())
+  userId    String
+  courseId  String
+  lessonId  String?
+  type      AnalyticsEventType
+  metadata  Json?
+  createdAt DateTime           @default(now())
+
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  course Course @relation(fields: [courseId], references: [id], onDelete: Cascade)
+
+  @@index([courseId, type])
+  @@index([userId, courseId])
+  @@index([createdAt])
+  @@map("analytics_events")
+}
