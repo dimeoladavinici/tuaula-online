@@ -5,3 +5,4 @@ export { Badge } from "./badge";
 export { ProgressBar } from "./progress-bar";
 export { Avatar } from "./avatar";
 export { EmptyState } from "./empty-state";
+export { Tabs } from "./tabs";

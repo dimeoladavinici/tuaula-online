@@ -1,0 +1,19 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(npx create-next-app@latest . --typescript --tailwind --eslint --app --src-dir --import-alias \"@/*\" --use-npm --no-turbopack)",
+      "Bash(npx create-next-app@latest tuaula-online --typescript --tailwind --eslint --app --src-dir --import-alias \"@/*\" --use-npm --no-turbopack)",
+      "Bash(shopt -s dotglob)",
+      "Bash(mv tuaula-online/* .)",
+      "Bash(mv tuaula-online/.* .)",
+      "Bash(rmdir tuaula-online:*)",
+      "Bash(npm install:*)",
+      "Bash(npx prisma:*)",
+      "Bash(npx tsc:*)",
+      "Bash(gh repo:*)",
+      "Bash(where gh:*)",
+      "Bash(timeout 15 npx next dev --port 3001)",
+      "Bash(node -e \"console.log\\(require\\('crypto'\\).randomBytes\\(32\\).toString\\('base64'\\)\\)\")"
+    ]
+  }
+}

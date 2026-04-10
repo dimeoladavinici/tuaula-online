@@ -1,14 +1,33 @@
 "use client";
 
-import { useParams } from "next/navigation";
+import { useState } from "react";
+import { useParams, useRouter } from "next/navigation";
 import { useSession } from "next-auth/react";
 import { Logo } from "@/components/layout";
 import { Button, Card, CardTitle } from "@/components/ui";
+import { joinCourse } from "@/actions/enrollment";
 import Link from "next/link";
 
 export default function UnirseCursoPage() {
   const { code } = useParams<{ code: string }>();
   const { data: session, status } = useSession();
+  const router = useRouter();
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
+
+  async function handleJoin() {
+    setLoading(true);
+    setError("");
+    const result = await joinCourse(code);
+    setLoading(false);
+
+    if (result.error) {
+      setError(result.error);
+      return;
+    }
+
+    router.push(`/alumno/curso/${result.slug}`);
+  }
 
   if (status === "loading") {
     return (
@@ -34,8 +53,8 @@ export default function UnirseCursoPage() {
             <p className="text-sm text-gray-500 mb-4">
               Vas a unirte como <strong>{session.user.name}</strong>
             </p>
-            {/* TODO: Implement actual join logic */}
-            <Button className="w-full">
+            {error && <p className="text-sm text-red-500 mb-3">{error}</p>}
+            <Button className="w-full" onClick={handleJoin} loading={loading}>
               Unirme al curso
             </Button>
           </>

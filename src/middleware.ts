@@ -1,7 +1,10 @@
-import { auth } from "@/lib/auth";
+import NextAuth from "next-auth";
+import { authConfig } from "@/lib/auth.config";
 import { NextResponse } from "next/server";
 
-const publicRoutes = ["/", "/login", "/registro", "/api/auth"];
+const { auth } = NextAuth(authConfig);
+
+const publicRoutes = ["/", "/login", "/registro"];
 
 const roleRoutes: Record<string, string[]> = {
   STUDENT: ["/alumno"],
@@ -12,16 +15,14 @@ const roleRoutes: Record<string, string[]> = {
 export default auth((req) => {
   const { pathname } = req.nextUrl;
 
-  // Allow public routes and unirse (join) routes
+  // Allow public routes, join routes, static assets, and API auth
   if (
-    publicRoutes.some((route) => pathname === route || pathname.startsWith(route + "/")) ||
-    pathname.startsWith("/unirse")
+    publicRoutes.some((route) => pathname === route) ||
+    pathname.startsWith("/unirse") ||
+    pathname.startsWith("/_next") ||
+    pathname.startsWith("/api/auth") ||
+    pathname.startsWith("/images")
   ) {
-    return NextResponse.next();
-  }
-
-  // Allow static assets and API auth
-  if (pathname.startsWith("/_next") || pathname.startsWith("/api/auth")) {
     return NextResponse.next();
   }
 
@@ -41,9 +42,8 @@ export default auth((req) => {
   const matchedPrefix = protectedPrefixes.find((prefix) => pathname.startsWith(prefix));
 
   if (matchedPrefix) {
-    const allowedPrefixes = roleRoutes[role] || [];
+    const allowedPrefixes = roleRoutes[role ?? ""] || [];
     if (!allowedPrefixes.includes(matchedPrefix)) {
-      // Redirect to their own dashboard
       const redirectTo =
         role === "TEACHER" ? "/profesor" : role === "SUPER_ADMIN" ? "/admin" : "/alumno";
       return NextResponse.redirect(new URL(redirectTo, req.url));
