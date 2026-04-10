@@ -178,7 +178,7 @@ function LessonRow({ lesson, index }: { lesson: any; index: number }) {
   const [expanded, setExpanded] = useState(false);
   const [showAddVideo, setShowAddVideo] = useState(false);
   const [showAddResource, setShowAddResource] = useState(false);
-  const [videoForm, setVideoForm] = useState({ title: "", type: "LOOM_EMBED" as const, url: "" });
+  const [videoForm, setVideoForm] = useState({ title: "", type: "YOUTUBE" as const, url: "" });
   const [resourceForm, setResourceForm] = useState({ title: "", url: "", resourceType: "OTHER" as const });
   const [loading, setLoading] = useState(false);
 
@@ -190,7 +190,7 @@ function LessonRow({ lesson, index }: { lesson: any; index: number }) {
       type: videoForm.type,
       url: videoForm.url.trim(),
     });
-    setVideoForm({ title: "", type: "LOOM_EMBED", url: "" });
+    setVideoForm({ title: "", type: "YOUTUBE", url: "" });
     setShowAddVideo(false);
     setLoading(false);
     router.refresh();
@@ -268,7 +268,7 @@ function LessonRow({ lesson, index }: { lesson: any; index: number }) {
                   <div key={video.id} className="flex items-center justify-between text-sm bg-white rounded px-3 py-2 border border-gray-100">
                     <div className="flex items-center gap-2">
                       <span className="text-xs px-1.5 py-0.5 rounded bg-blue-50 text-blue-600 font-mono">
-                        {video.type === "GOOGLE_DRIVE" ? "Drive" : video.type === "LOOM_LINK" ? "Loom" : "Embed"}
+                        {video.type === "YOUTUBE" ? "YouTube" : video.type === "GOOGLE_DRIVE" ? "Drive" : "Loom"}
                       </span>
                       <span className="text-gray-700">{video.title}</span>
                     </div>
@@ -293,8 +293,8 @@ function LessonRow({ lesson, index }: { lesson: any; index: number }) {
                   onChange={(e) => setVideoForm({ ...videoForm, type: e.target.value as any })}
                   className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm"
                 >
-                  <option value="LOOM_EMBED">Loom (embed)</option>
-                  <option value="LOOM_LINK">Loom (link)</option>
+                  <option value="YOUTUBE">YouTube (privado/oculto)</option>
+                  <option value="LOOM_LINK">Loom</option>
                   <option value="GOOGLE_DRIVE">Google Drive</option>
                 </select>
                 <Input

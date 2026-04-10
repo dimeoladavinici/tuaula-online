@@ -6,7 +6,15 @@ import { revalidatePath } from "next/cache";
 
 export async function createLiveClass(
   courseId: string,
-  data: { title: string; description?: string; dateTime: string; meetingUrl: string }
+  data: {
+    title: string;
+    description?: string;
+    dateTime: string;
+    meetingUrl: string;
+    isRecurring?: boolean;
+    recurrenceDay?: number;
+    recurrenceTime?: string;
+  }
 ) {
   const session = await auth();
   if (!session?.user || session.user.role !== "TEACHER") return { error: "No tenés permisos" };
@@ -27,6 +35,9 @@ export async function createLiveClass(
       description: data.description || null,
       dateTime: new Date(data.dateTime),
       meetingUrl: data.meetingUrl,
+      isRecurring: data.isRecurring ?? false,
+      recurrenceDay: data.recurrenceDay ?? null,
+      recurrenceTime: data.recurrenceTime ?? null,
     },
   });
 

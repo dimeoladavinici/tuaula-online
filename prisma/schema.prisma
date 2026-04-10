@@ -22,9 +22,9 @@ enum EnrollmentStatus {
 }
 
 enum VideoType {
+  YOUTUBE
   GOOGLE_DRIVE
   LOOM_LINK
-  LOOM_EMBED
 }
 
 enum ResourceType {
@@ -173,6 +173,9 @@ model LiveClassEvent {
   dateTime    DateTime
   timezone    String   @default("America/Argentina/Buenos_Aires")
   meetingUrl  String
+  isRecurring Boolean  @default(false)
+  recurrenceDay Int?   // 0=domingo, 1=lunes, ..., 6=sábado
+  recurrenceTime String? // "HH:mm" format
   createdAt   DateTime @default(now())
 
   course Course @relation(fields: [courseId], references: [id], onDelete: Cascade)

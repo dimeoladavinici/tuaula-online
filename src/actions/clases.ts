@@ -97,7 +97,7 @@ export async function deleteLesson(lessonId: string) {
 
 export async function addVideo(
   lessonId: string,
-  data: { title: string; type: "GOOGLE_DRIVE" | "LOOM_LINK" | "LOOM_EMBED"; url: string }
+  data: { title: string; type: "YOUTUBE" | "GOOGLE_DRIVE" | "LOOM_LINK"; url: string }
 ) {
   const session = await auth();
   if (!session?.user || session.user.role !== "TEACHER") return { error: "No tenés permisos" };
